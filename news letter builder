@@ -1,0 +1,1365 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Newsletter Builder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg:#f2f6f3;
+      --panel:#ffffff;
+      --panel-soft:#f8faf8;
+      --ink:#17261f;
+      --muted:#68766f;
+      --line:#d9e3dc;
+      --line-strong:#bdccc2;
+      --blue:#2463d4;
+      --blue-soft:#eef5ff;
+      --green:#276348;
+      --green-soft:#eef8f1;
+      --red:#b83c32;
+      --amber:#8a5a10;
+      --shadow:0 16px 42px rgba(28,58,42,.12);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    [hidden]{display:none!important}
+    html{min-width:320px;background:var(--bg)}
+    body{margin:0;color:var(--ink);background:var(--bg);font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable="true"]:focus-visible{outline:3px solid rgba(36,99,212,.2);outline-offset:1px}
+    .app{min-height:100vh}
+    .topbar{position:sticky;z-index:20;top:0;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.96);backdrop-filter:blur(12px)}
+    .brand{display:flex;align-items:center;gap:11px;min-width:220px}
+    .brand-mark{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;color:#fff;background:linear-gradient(145deg,#2463d4,#5086e5);box-shadow:0 8px 18px rgba(36,99,212,.24);font-weight:700}
+    h1,h2,h3,p{margin:0}
+    h1{font-size:18px;line-height:24px}
+    h2{font-size:20px;line-height:28px}
+    h3{font-size:16px;line-height:23px}
+    .subtle{color:var(--muted);font-size:13px;line-height:19px}
+    .top-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+    .status-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;color:var(--green);background:#eaf5ee;font-size:12px;white-space:nowrap}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:#45a36d}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:10px;color:var(--ink);background:#fff;font-weight:600;font-size:13px;transition:.15s ease}
+    .btn:hover{border-color:#9eb0a5;background:#f5f8f6;transform:translateY(-1px)}
+    .btn.primary{border-color:var(--blue);color:#fff;background:var(--blue)}
+    .btn.primary:hover{background:#1e56bd}
+    .btn.danger{border-color:#efc1bd;color:var(--red);background:#fff8f7}
+    .btn.small{min-height:32px;padding:6px 9px;font-size:12px}
+    .icon{font-size:16px;line-height:1}
+    .workspace{display:grid;grid-template-columns:minmax(460px,1.08fr) minmax(390px,.92fr);min-height:calc(100vh - 69px)}
+    .editor{padding:22px;border-right:1px solid var(--line);background:var(--panel)}
+    .preview-pane{padding:22px;background:#eaf0ec}
+    .preview-sticky{position:sticky;top:92px}
+    .section-head,.preview-head,.row-between{display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .tabs{display:flex;gap:6px;margin:20px 0 18px;padding:4px;border-radius:12px;background:#edf2ee}
+    .tab{flex:1;min-height:36px;border:0;border-radius:9px;color:var(--muted);background:transparent;font-weight:600;font-size:13px}
+    .tab.active{color:var(--blue);background:#fff;box-shadow:0 3px 10px rgba(35,70,49,.09)}
+    .panel{display:none}
+    .panel.active{display:block}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .field{display:grid;gap:7px;min-width:0;color:#34473d;font-size:13px;font-weight:600}
+    .field.wide{grid-column:1/-1}
+    .field small{color:var(--muted);font-weight:400;line-height:18px}
+    input[type="text"],input[type="url"],select,textarea{width:100%;min-width:0;border:1px solid var(--line-strong);border-radius:10px;color:var(--ink);background:#fff;transition:.15s ease}
+    input[type="text"],input[type="url"],select{height:41px;padding:8px 10px}
+    textarea{min-height:96px;padding:10px;resize:vertical;line-height:1.55}
+    input[type="text"]:hover,input[type="url"]:hover,select:hover,textarea:hover{border-color:#9eb0a5}
+    .upload-box{display:grid;gap:10px;padding:13px;border:1px dashed #aebdb4;border-radius:12px;background:var(--panel-soft)}
+    .upload-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .file-input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    .image-state{display:flex;align-items:center;gap:10px;min-height:46px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff}
+    .image-thumb{width:72px;height:38px;flex:0 0 auto;border-radius:7px;object-fit:cover;background:#edf2ee}
+    .image-state-copy{min-width:0;flex:1}
+    .image-state-copy strong,.image-state-copy span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .image-state-copy strong{font-size:12px}
+    .image-state-copy span{margin-top:2px;color:var(--muted);font-size:11px}
+    .color-row{display:grid;grid-template-columns:58px 1fr;gap:9px}
+    input[type="color"]{width:58px;height:41px;padding:3px;border:1px solid var(--line-strong);border-radius:10px;background:#fff}
+    .rich-text-field{display:grid;gap:8px}
+    .rich-toolbar{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;padding:10px;border:1px solid var(--line);border-bottom:0;border-radius:11px 11px 0 0;background:#f6f9f7}
+    .rich-toolbar-control{display:grid;gap:4px;color:#53645b;font-size:11px;font-weight:600}
+    .rich-toolbar-control select{width:108px;height:34px;padding:5px 8px;background:#fff}
+    .rich-toolbar-control input[type="color"]{width:48px;height:34px;border-radius:8px}
+    .rich-editor{min-height:132px;margin-top:-8px;padding:12px;border:1px solid var(--line-strong);border-radius:0 0 11px 11px;background:#fff;line-height:1.58;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text}
+    .rich-editor:hover{border-color:#9eb0a5}
+    .rich-editor p,.rich-editor div{margin:0 0 10px}
+    .rich-editor p:last-child,.rich-editor div:last-child{margin-bottom:0}
+    .rich-editor:empty::before{content:'在这里填写卡片正文内容。';color:#9aa69f;pointer-events:none}
+    .rich-help{color:var(--muted);font-size:11px;line-height:17px;font-weight:400}
+    .check{display:flex;align-items:center;gap:9px;color:var(--ink);font-size:13px;font-weight:500}
+    .check input{width:17px;height:17px;accent-color:var(--blue)}
+    .button-editor{display:grid;gap:10px}
+    .button-editor-list{display:grid;gap:10px}
+    .button-editor-item{display:grid;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel-soft)}
+    .button-editor-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .button-editor-head strong{font-size:13px}
+    .empty.compact{padding:14px;font-size:12px}
+    .card-tools{display:flex;gap:8px;flex-wrap:wrap}
+    .card-list{display:grid;gap:8px;margin:14px 0 18px}
+    .card-item{display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;transition:.15s ease}
+    .card-item.selected{border-color:#7ea4ea;background:#f0f5ff;box-shadow:0 0 0 2px rgba(36,99,212,.07)}
+    .card-item.dragging{opacity:.45}
+    .drag-handle{display:grid;place-items:center;width:26px;height:36px;border:0;color:#839188;background:transparent;font-size:19px;cursor:grab}
+    .card-select{min-width:0;padding:2px;border:0;text-align:left;color:inherit;background:transparent}
+    .card-select strong,.card-select span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card-select strong{font-size:14px}
+    .card-select span{margin-top:3px;color:var(--muted);font-size:11px}
+    .mini-actions{display:flex;gap:4px}
+    .mini{display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;color:#53645b;background:#fff}
+    .mini:hover{border-color:#9eb0a5;background:#f5f8f6}
+    .divider{height:1px;margin:18px 0;background:var(--line)}
+    .notice{padding:12px 14px;border:1px solid #d9e6f7;border-radius:11px;color:#345276;background:#f2f7ff;font-size:12px;line-height:19px}
+    .notice.warn{border-color:#ead6a9;color:#73501b;background:#fff8e9}
+    .preview-head{margin-bottom:14px}
+    .size-box{text-align:right}
+    .size-number{display:block;color:var(--green);font-weight:700;font-size:14px}
+    .size-number.warn{color:var(--amber)}
+    .size-number.over{color:var(--red)}
+    .meter{width:120px;height:6px;margin-top:6px;overflow:hidden;border-radius:999px;background:#d5dfd8}
+    .meter-bar{height:100%;width:0;border-radius:999px;background:#45a36d;transition:width .2s ease,background .2s ease}
+    .preview-frame-wrap{height:720px;overflow:hidden;border-radius:15px;background:#fff;box-shadow:var(--shadow)}
+    #previewFrame{display:block;width:868px;height:720px;border:0;background:#f2f5ef;transform-origin:top left}
+    .height-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .height-controls input{width:110px;height:36px;padding:7px 9px;border:1px solid var(--line-strong);border-radius:9px;font:inherit}
+    .builtin-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-soft);gap:12px}
+    .preview-actions{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+    .json-file{display:none}
+    .empty{padding:24px;border:1px dashed var(--line-strong);border-radius:12px;text-align:center;color:var(--muted);background:var(--panel-soft)}
+    .footer-note{margin-top:14px;color:var(--muted);font-size:11px;line-height:18px;text-align:center}
+    .toast{position:fixed;z-index:99;right:20px;bottom:20px;max-width:min(360px,calc(100vw - 40px));padding:12px 14px;border-radius:11px;color:#fff;background:#1d3529;box-shadow:0 12px 30px rgba(0,0,0,.22);font-size:13px;opacity:0;pointer-events:none;transform:translateY(12px);transition:.2s ease}
+    .toast.show{opacity:1;transform:translateY(0)}
+    .toast.error{background:#8d3029}
+    @media (max-width:1000px){
+      .workspace{grid-template-columns:1fr}
+      .editor{border-right:0;border-bottom:1px solid var(--line)}
+      .preview-sticky{position:static}
+      .preview-frame-wrap{height:680px}
+    }
+    @media (max-width:720px){
+      .topbar{position:static;align-items:flex-start;flex-direction:column;padding:14px}
+      .top-actions{width:100%;justify-content:flex-start}
+      .editor,.preview-pane{padding:15px}
+      .form-grid{grid-template-columns:1fr}
+      .field.wide{grid-column:auto}
+      .card-item{grid-template-columns:24px minmax(0,1fr)}
+      .mini-actions{grid-column:2}
+      .section-head,.preview-head{align-items:flex-start;flex-direction:column}
+      .size-box{text-align:left}
+      .meter{width:180px}
+    }
+    @media (max-width:460px){
+      .top-actions .btn{flex:1 1 135px}
+      .tabs{display:grid;grid-template-columns:1fr}
+      .color-row{grid-template-columns:52px 1fr}
+      .preview-frame-wrap{height:620px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">DI</div>
+        <div>
+          <h1>Newsletter Builder</h1>
+          <p class="subtle">Data Infra 离线生成器</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="status-chip"><span class="status-dot"></span><span id="saveStatus">本地运行</span></span>
+        <button class="btn" id="loadLocalBtn" type="button"><span class="icon">↺</span>读取草稿</button>
+        <button class="btn" id="saveLocalBtn" type="button"><span class="icon">✓</span>保存草稿</button>
+        <button class="btn" id="importDraftBtn" type="button"><span class="icon">↑</span>导入 JSON</button>
+        <button class="btn primary" id="downloadHtmlBtn" type="button"><span class="icon">↓</span>导出 HTML</button>
+        <input class="json-file" id="draftFileInput" type="file" accept="application/json,.json">
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="editor" aria-label="Newsletter 编辑器">
+        <div class="section-head">
+          <div>
+            <h2>编辑内容</h2>
+            <p class="subtle">所有内容只保存在当前浏览器或下载的文件中</p>
+          </div>
+          <button class="btn small" id="exportDraftBtn" type="button">导出草稿 JSON</button>
+        </div>
+
+        <nav class="tabs" aria-label="编辑分类">
+          <button class="tab active" type="button" data-tab="global">基础设置</button>
+          <button class="tab" type="button" data-tab="cards">卡片内容</button>
+          <button class="tab" type="button" data-tab="output">导出设置</button>
+        </nav>
+
+        <section class="panel active" data-panel="global">
+          <div class="form-grid">
+            <label class="field">语言
+              <select id="languageInput">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+            <label class="field">发布月份
+              <input id="monthInput" type="text" value="2026.10">
+            </label>
+            <label class="field wide">Newsletter 主标题
+              <input id="newsletterTitleInput" type="text" value="Data Infra What's New">
+            </label>
+            <label class="field wide">Newsletter 背景颜色
+              <div class="color-row"><input id="newsletterBgColorInput" type="color" value="#f2f5ef"><input id="newsletterBgColorText" type="text" value="#f2f5ef" aria-label="Newsletter 背景颜色十六进制值"></div>
+              <small>控制欢迎卡片、内容卡片之间及页面四周的背景颜色。</small>
+            </label>
+            <div class="field wide builtin-card">
+              <div class="row-between"><strong>开头欢迎卡片</strong><button class="btn small danger" id="toggleWelcomeBtn" type="button">删除欢迎卡片</button></div>
+              <small id="welcomeVisibilityNote">删除欢迎介绍文字卡片，不影响独立的顶部横幅；内容保留，可随时恢复。</small>
+              <div class="form-grid" id="welcomeCardFields">
+                <label class="field wide">欢迎卡片标题
+                  <input id="welcomeTitleInput" type="text" value="欢迎阅读最新一期 Data Infra Newsletter！">
+                </label>
+                <label class="field wide">欢迎介绍
+                  <textarea id="welcomeBodyInput">本月更新围绕产品能力、开发效率和稳定性展开。请查看下方各项更新。</textarea>
+                </label>
+                <div class="field wide" id="welcomeHeightControl"></div>
+              </div>
+            </div>
+            <div class="field wide builtin-card">
+              <div class="row-between"><strong>结尾反馈卡片</strong><button class="btn small danger" id="toggleFeedbackBtn" type="button">删除反馈卡片</button></div>
+              <small id="feedbackVisibilityNote">删除后不再出现在预览或导出的 HTML 中，可随时恢复。</small>
+              <div class="field wide" id="feedbackHeightControl"></div>
+            </div>
+            <div class="field wide upload-box">
+              <div class="row-between">
+                <div><strong>顶部欢迎横幅</strong><p class="subtle">上传后自动裁切为 697 × 200，与普通卡片横幅尺寸一致</p></div>
+                <div class="upload-row">
+                  <label class="btn small" for="heroUpload">上传图片</label>
+                  <button class="btn small danger" id="removeHeroBtn" type="button">移除</button>
+                  <input class="file-input" id="heroUpload" type="file" accept="image/png,image/jpeg,image/webp">
+                </div>
+              </div>
+              <div class="image-state" id="heroImageState"></div>
+              <label class="field">或使用图片 URL（导出的文件更小）
+                <input id="heroUrlInput" type="url" placeholder="https://example.com/banner.jpg">
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="cards">
+          <div class="section-head">
+            <div><h3>内容卡片</h3><p class="subtle">可拖动排序，也可使用上下移动按钮</p></div>
+            <button class="btn small" id="addCardBtn" type="button"><span class="icon">＋</span>添加卡片</button>
+          </div>
+          <div class="card-list" id="cardList"></div>
+          <div id="cardEditor"></div>
+        </section>
+
+        <section class="panel" data-panel="output">
+          <div class="form-grid">
+            <label class="field wide">导出文件名
+              <input id="fileNameInput" type="text" value="Data Infra Newsletter 2026.10">
+              <small>导出时会自动添加 .html 后缀。</small>
+            </label>
+            <label class="field">邮件主体宽度
+              <input id="emailWidthInput" type="text" value="840 px（所有卡片固定宽度）" readonly>
+            </label>
+            <label class="field">卡片间距
+              <select id="cardGapInput">
+                <option value="16">标准 16 px</option>
+                <option value="12">紧凑 12 px</option>
+                <option value="20">宽松 20 px</option>
+              </select>
+            </label>
+            <div class="notice wide">导出的 Newsletter 使用纯 table 布局、内联样式和系统字体，不依赖 Flex、Grid、Google Fonts 或网络脚本。</div>
+            <div class="notice warn wide">上传的图片会写入 HTML 并增加文件大小。需要严格控制在 64 KB 时，优先使用公司内部 HTTPS 图片 URL。</div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="preview-pane" aria-label="Newsletter 实时预览">
+        <div class="preview-sticky">
+          <div class="preview-head">
+            <div><h2>实时预览</h2><p class="subtle">卡片实际宽度 840 px · 预览等比例缩放</p></div>
+            <div class="size-box">
+              <span class="size-number" id="sizeNumber">0 KB / 64 KB</span>
+              <div class="meter" aria-hidden="true"><div class="meter-bar" id="sizeBar"></div></div>
+            </div>
+          </div>
+          <div class="preview-frame-wrap">
+            <iframe id="previewFrame" title="Newsletter 预览"></iframe>
+          </div>
+          <div class="preview-actions">
+            <button class="btn" id="refreshPreviewBtn" type="button">刷新预览</button>
+            <button class="btn primary" id="downloadHtmlBtnBottom" type="button">导出 HTML</button>
+          </div>
+          <p class="footer-note">纯色标题背景兼容性最高；背景图片在部分邮件系统中可能被过滤。</p>
+        </div>
+      </aside>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'data-infra-newsletter-builder-v1';
+      const MAX_HTML_BYTES = 64 * 1024;
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+      const makeId = () => 'card-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+      const makeButtonId = () => 'button-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+      const createCardButton = (overrides = {}) => ({
+        id: makeButtonId(),
+        text: '了解更多',
+        url: '',
+        ...overrides
+      });
+
+      const createDefaultCard = (overrides = {}) => ({
+        id: makeId(),
+        section: '产品更新',
+        title: '新卡片标题',
+        subtitle: '在这里填写副标题',
+        body: '在这里填写卡片正文内容。',
+        bodyRichHtml: '',
+        height: 0,
+        imageData: '',
+        imageName: '',
+        imageUrl: '',
+        titleBgColor: '#eef5ff',
+        bodyFontSize: '16',
+        bodyColor: '#657083',
+        titleBgData: '',
+        titleBgName: '',
+        titleBgUrl: '',
+        buttons: [createCardButton()],
+        ...overrides
+      });
+
+      const defaultState = () => {
+        const first = createDefaultCard({
+          section: '本月上线',
+          title: 'Langfuse 全速迈向 V4',
+          subtitle: 'di CLI 优先 · Prompt 提速约 9 倍 · V4 迁移提醒 · V4.35.0',
+          body: '所有 di-cli 读取已全面切换到 V4 事件聚合，同时优化 Prompt 查询性能，并提供更清晰的迁移提醒。',
+          titleBgColor: '#eef5ff'
+        });
+        const second = createDefaultCard({
+          section: '产品更新',
+          title: 'DataHub Agent',
+          subtitle: '覆盖更多日常数据接入任务',
+          body: '只需通过对话描述需求，即可获得数据导入任务的操作帮助。',
+          titleBgColor: '#fff4e8'
+        });
+        const third = createDefaultCard({
+          section: '即将推出',
+          title: 'Diana 2.8',
+          subtitle: '更多数据，一次导出 · Hive ➕ Google Sheets，同一 Topic 分析',
+          body: '支持更大的结果导出，并将数仓数据与业务维护的表格结合分析。',
+          titleBgColor: '#eef8f1'
+        });
+        return {
+          version: 5,
+          language: 'zh',
+          month: '2026.10',
+          newsletterTitle: "Data Infra What's New",
+          newsletterBgColor: '#f2f5ef',
+          welcomeTitle: '欢迎阅读最新一期 Data Infra Newsletter！',
+          welcomeBody: '本月更新围绕产品能力、开发效率和稳定性展开。请查看下方各项更新。',
+          welcomeHeight: 0,
+          feedbackHeight: 0,
+          heroData: '',
+          heroName: '',
+          heroUrl: '',
+          fileName: 'Data Infra Newsletter 2026.10',
+          emailWidth: '840',
+          cardGap: '16',
+          showFeedback: true,
+          showWelcome: true,
+          cards: [first, second, third],
+          selectedId: first.id
+        };
+      };
+
+      let state = defaultState();
+      let draggedId = '';
+      let renderTimer = 0;
+      let toastTimer = 0;
+      let savedRichRange = null;
+
+      const elements = {
+        tabs: $$('.tab'),
+        panels: $$('.panel'),
+        cardList: $('#cardList'),
+        cardEditor: $('#cardEditor'),
+        previewFrame: $('#previewFrame'),
+        previewWrap: $('.preview-frame-wrap'),
+        sizeNumber: $('#sizeNumber'),
+        sizeBar: $('#sizeBar'),
+        toast: $('#toast'),
+        saveStatus: $('#saveStatus')
+      };
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[char]);
+      }
+
+      function safeColor(value, fallback) {
+        const color = String(value || '').trim();
+        return /^#[0-9a-f]{6}$/i.test(color) ? color : fallback;
+      }
+
+      function safeFontSize(value, fallback = 16) {
+        const size = Number.parseInt(value, 10);
+        return Number.isFinite(size) && size >= 12 && size <= 24 ? size : fallback;
+      }
+
+      function normalizeCardButtons(card) {
+        if (!Array.isArray(card.buttons)) {
+          card.buttons = card.showButton === false
+            ? []
+            : [createCardButton({ text: card.buttonText || '了解更多', url: card.buttonUrl || '' })];
+        }
+        card.buttons = card.buttons.map(button => ({
+          id: button?.id || makeButtonId(),
+          text: String(button?.text ?? ''),
+          url: String(button?.url ?? '')
+        }));
+        return card.buttons;
+      }
+
+      function textToParagraphs(value, fontSize = 16, color = '#657083') {
+        const parts = String(value || '').split(/\n+/).map(part => part.trim()).filter(Boolean);
+        const size = safeFontSize(fontSize);
+        const lineHeight = Math.round(size * 1.58);
+        const textColor = safeColor(color, '#657083');
+        if (!parts.length) return `<p style="margin:0;font-size:${size}px;line-height:${lineHeight}px;color:${textColor};">&nbsp;</p>`;
+        return parts.map((part, index) => `<p style="margin:${index ? '10px' : '0'} 0 0;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:${size}px;line-height:${lineHeight}px;color:${textColor};">${escapeHtml(part)}</p>`).join('');
+      }
+
+      function legacyBodyToRichHtml(value) {
+        const parts = String(value || '').split(/\n+/).map(part => part.trim()).filter(Boolean);
+        return parts.map(part => `<p>${escapeHtml(part)}</p>`).join('');
+      }
+
+      function normalizeCssColor(value) {
+        const color = String(value || '').trim();
+        if (/^#[0-9a-f]{6}$/i.test(color)) return color.toUpperCase();
+        if (/^#[0-9a-f]{3}$/i.test(color)) {
+          return ('#' + color.slice(1).split('').map(char => char + char).join('')).toUpperCase();
+        }
+        const rgb = color.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i);
+        if (!rgb) return '';
+        const values = rgb.slice(1, 4).map(valuePart => Math.max(0, Math.min(255, Number(valuePart))));
+        return '#' + values.map(valuePart => valuePart.toString(16).padStart(2, '0')).join('').toUpperCase();
+      }
+
+      function sanitizedInlineStyles(element) {
+        const styles = [];
+        const fontSize = Number.parseInt(element.style?.fontSize || '', 10);
+        if (Number.isFinite(fontSize) && fontSize >= 12 && fontSize <= 24) {
+          styles.push(`font-size:${fontSize}px`, `line-height:${Math.round(fontSize * 1.58)}px`);
+        }
+        const color = normalizeCssColor(element.style?.color || element.getAttribute?.('color'));
+        if (color) styles.push(`color:${color}`);
+        const weight = String(element.style?.fontWeight || '').toLowerCase();
+        if (weight === 'bold' || Number.parseInt(weight, 10) >= 600) styles.push('font-weight:700');
+        if (String(element.style?.fontStyle || '').toLowerCase() === 'italic') styles.push('font-style:italic');
+        if (String(element.style?.textDecoration || '').toLowerCase().includes('underline')) styles.push('text-decoration:underline');
+        return styles.join(';');
+      }
+
+      function sanitizeInlineNode(node) {
+        if (node.nodeType === 3) return escapeHtml(node.nodeValue);
+        if (node.nodeType !== 1) return '';
+        const tag = node.tagName.toUpperCase();
+        if (tag === 'BR') return '<br>';
+        const inner = Array.from(node.childNodes).map(sanitizeInlineNode).join('');
+        if (tag === 'P' || tag === 'DIV') return inner + '<br>';
+        const styles = sanitizedInlineStyles(node);
+        const styleAttr = styles ? ` style="${styles}"` : '';
+        if (tag === 'STRONG' || tag === 'B') return `<strong${styleAttr}>${inner}</strong>`;
+        if (tag === 'EM' || tag === 'I') return `<em${styleAttr}>${inner}</em>`;
+        if (tag === 'U') return `<u${styleAttr}>${inner}</u>`;
+        if (tag === 'SPAN' || tag === 'FONT') return styles ? `<span${styleAttr}>${inner}</span>` : inner;
+        return inner;
+      }
+
+      function sanitizeRichEditorHtml(value) {
+        const template = document.createElement('template');
+        template.innerHTML = String(value || '');
+        const blocks = [];
+        let inlineBuffer = [];
+        const flushInline = () => {
+          const content = inlineBuffer.join('');
+          if (content.replace(/<br>/gi, '').trim()) blocks.push(content);
+          inlineBuffer = [];
+        };
+        Array.from(template.content.childNodes).forEach(node => {
+          if (node.nodeType === 1 && (node.tagName === 'P' || node.tagName === 'DIV')) {
+            flushInline();
+            blocks.push(Array.from(node.childNodes).map(sanitizeInlineNode).join(''));
+          } else if (node.nodeType === 1 && node.tagName === 'BR') {
+            flushInline();
+          } else {
+            inlineBuffer.push(sanitizeInlineNode(node));
+          }
+        });
+        flushInline();
+        return blocks.map(content => `<p>${content || '<br>'}</p>`).join('');
+      }
+
+      function richTextToEmailHtml(value, fontSize = 16, color = '#657083') {
+        const size = safeFontSize(fontSize);
+        const lineHeight = Math.round(size * 1.58);
+        const textColor = safeColor(color, '#657083');
+        const sanitized = sanitizeRichEditorHtml(value);
+        if (!sanitized) return `<p style="margin:0;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:${size}px;line-height:${lineHeight}px;color:${textColor};">&nbsp;</p>`;
+        const template = document.createElement('template');
+        template.innerHTML = sanitized;
+        return Array.from(template.content.children).map((paragraph, index) => `<p style="margin:${index ? '10px' : '0'} 0 0;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:${size}px;line-height:${lineHeight}px;color:${textColor};">${paragraph.innerHTML || '&nbsp;'}</p>`).join('');
+      }
+
+      function safeImageUrl(value) {
+        const url = String(value || '').trim();
+        if (/^https:\/\//i.test(url) || /^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(url)) return url;
+        return '';
+      }
+
+      function safeLink(value) {
+        const url = String(value || '').trim();
+        if (/^(?:https:\/\/|mailto:)/i.test(url)) return url;
+        return '#';
+      }
+
+      function cssUrl(value) {
+        return safeImageUrl(value).replace(/['()]/g, char => '%' + char.charCodeAt(0).toString(16));
+      }
+
+      function imageSource(data, url) {
+        return safeImageUrl(url) || safeImageUrl(data);
+      }
+
+      function selectedCard() {
+        return state.cards.find(card => card.id === state.selectedId) || state.cards[0] || null;
+      }
+
+      function showToast(message, isError = false) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = message;
+        elements.toast.className = 'toast show' + (isError ? ' error' : '');
+        toastTimer = window.setTimeout(() => { elements.toast.className = 'toast'; }, 2600);
+      }
+
+      function setDirty() {
+        elements.saveStatus.textContent = '有未保存更改';
+        schedulePreview();
+      }
+
+      function fileNameWithExtension(name, extension) {
+        const safe = String(name || 'Newsletter').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'Newsletter';
+        return safe.toLowerCase().endsWith(extension) ? safe : safe + extension;
+      }
+
+      function downloadBlob(content, type, fileName) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function processImage(file, width, height, quality = .72) {
+        return new Promise((resolve, reject) => {
+          if (!file || !file.type.startsWith('image/')) {
+            reject(new Error('请选择 PNG、JPG 或 WebP 图片。'));
+            return;
+          }
+          if (file.size > 15 * 1024 * 1024) {
+            reject(new Error('图片不能超过 15 MB。'));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error('无法读取图片。'));
+          reader.onload = () => {
+            const image = new Image();
+            image.onerror = () => reject(new Error('图片格式无法识别。'));
+            image.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const context = canvas.getContext('2d');
+              const scale = Math.max(width / image.width, height / image.height);
+              const drawWidth = image.width * scale;
+              const drawHeight = image.height * scale;
+              const x = (width - drawWidth) / 2;
+              const y = (height - drawHeight) / 2;
+              context.fillStyle = '#ffffff';
+              context.fillRect(0, 0, width, height);
+              context.drawImage(image, x, y, drawWidth, drawHeight);
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            image.src = String(reader.result);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function normalizeHeight(value) {
+        const number = Number(value);
+        return Number.isFinite(number) && number > 0 ? Math.max(80, Math.min(6000, Math.round(number))) : 0;
+      }
+
+      function heightStyle(value) {
+        const height = normalizeHeight(value);
+        return height ? `height:${height}px;` : '';
+      }
+
+      function heightControl(target, value, label = '卡片') {
+        return `<div class="field wide" data-height-editor="${escapeHtml(target)}">
+          <strong>${label}高度（上下方向）</strong>
+          <div class="height-controls">
+            <input type="number" min="80" max="6000" step="1" placeholder="自动" value="${normalizeHeight(value) || ''}" aria-label="${label}高度（px）">
+            <button class="btn small" type="button" data-height-action="apply">更改高度</button>
+            <button class="btn small" type="button" data-height-action="decrease">缩短 −20 px</button>
+            <button class="btn small" type="button" data-height-action="increase">加长 +20 px</button>
+            <button class="btn small" type="button" data-height-action="reset">自动高度</button>
+          </div>
+          <small data-height-readout>宽度固定 840 px</small>
+          <small>可输入 80–6000 px；留空为自动高度。内容较多时会自动撑开，不裁切文字或图片。</small>
+        </div>`;
+      }
+
+      function measuredCardHeight(target) {
+        const cards = elements.previewFrame.contentDocument?.querySelectorAll('[data-height-key]') || [];
+        const table = Array.from(cards).find(item => item.dataset.heightKey === target);
+        return table ? Math.round(table.getBoundingClientRect().height) : 0;
+      }
+
+      function updateHeightReadouts() {
+        $$('[data-height-editor]').forEach(control => {
+          const height = measuredCardHeight(control.dataset.heightEditor);
+          const input = $('input', control);
+          const requested = normalizeHeight(input.value);
+          $('[data-height-readout]', control).textContent = height
+            ? `实际尺寸：840 × ${height} px${requested && height > requested + 1 ? '（内容所需的最小高度）' : ''}`
+            : '宽度固定 840 px';
+        });
+      }
+
+      function resizePreview() {
+        const available = elements.previewWrap.clientWidth;
+        if (!available) return;
+        const scale = Math.min(1, available / 868);
+        elements.previewFrame.style.width = Math.max(868, available) + 'px';
+        elements.previewFrame.style.height = elements.previewWrap.clientHeight / scale + 'px';
+        elements.previewFrame.style.transform = `scale(${scale})`;
+      }
+
+      document.addEventListener('click', event => {
+        const button = event.target.closest('[data-height-action]');
+        if (!button) return;
+        const control = button.closest('[data-height-editor]');
+        const target = control.dataset.heightEditor;
+        const input = $('input', control);
+        const card = state.cards.find(item => item.id === target);
+        const current = measuredCardHeight(target) || normalizeHeight(input.value) || 300;
+        let height;
+        if (button.dataset.heightAction === 'reset') height = 0;
+        else if (button.dataset.heightAction === 'increase') height = current + 20;
+        else if (button.dataset.heightAction === 'decrease') height = current - 20;
+        else {
+          if (input.value && !input.checkValidity()) {
+            input.reportValidity();
+            return;
+          }
+          height = input.value;
+        }
+        height = normalizeHeight(height);
+        if (target === 'welcome') state.welcomeHeight = height;
+        else if (target === 'feedback') state.feedbackHeight = height;
+        else if (card) card.height = height;
+        else return;
+        input.value = height || '';
+        setDirty();
+      });
+
+      function buildEmail() {
+        const width = 840;
+        const gap = Number(state.cardGap) || 16;
+        const newsletterBgColor = safeColor(state.newsletterBgColor, '#F2F5EF');
+        const hero = imageSource(state.heroData, state.heroUrl);
+        const language = state.language === 'en' ? 'en' : 'zh-CN';
+        const feedbackTitle = state.language === 'en' ? "💬 We'd love to hear from you" : '💬 期待你的反馈';
+        const feedbackBody = state.language === 'en'
+          ? 'We hope you enjoy these updates, and we welcome your feedback and suggestions.'
+          : '希望这些更新对你有帮助，也欢迎随时告诉我们你的想法与建议。';
+
+        // Keep export geometry at 840 px; only the editor preview scales visually.
+        const containerStyle = `width:${width}px;min-width:${width}px;max-width:${width}px;table-layout:fixed;box-sizing:border-box;border-collapse:separate;border-spacing:0;overflow-wrap:break-word;`;
+        const heroHeight = Math.round(width * 200 / 697);
+        const heroHtml = hero
+          ? `<tr><td style="padding:0;border-radius:21px;overflow:hidden;"><img src="${escapeHtml(hero)}" width="${width}" height="${heroHeight}" alt="${escapeHtml(state.newsletterTitle)}" style="display:block;width:100%;max-width:${width}px;height:auto;aspect-ratio:697/200;object-fit:cover;border:0;border-radius:21px;"></td></tr>`
+          : `<tr><td style="padding:46px 38px 38px;background:#DDEBFF;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;color:#12366A;border-radius:22px;"><p style="margin:0;font-size:36px;line-height:42px;font-weight:700;">${escapeHtml(state.newsletterTitle)}</p><p style="margin:8px 0 0;font-size:17px;line-height:24px;letter-spacing:1px;">Newsletter · ${escapeHtml(state.month)}</p></td></tr>`;
+
+        const cardsHtml = state.cards.map((card, index) => {
+          const banner = imageSource(card.imageData, card.imageUrl);
+          const titleBackground = imageSource(card.titleBgData, card.titleBgUrl);
+          const bgStyle = titleBackground
+            ? `background-color:${safeColor(card.titleBgColor, '#EEF5FF')};background-image:url('${cssUrl(titleBackground)}');background-position:center;background-size:cover;`
+            : `background-color:${safeColor(card.titleBgColor, '#EEF5FF')};`;
+          const bannerHtml = banner
+            ? `<tr><td style="height:1px;padding:0;background:#FFFFFF;"><img src="${escapeHtml(banner)}" width="${width}" alt="" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;"></td></tr>`
+            : '';
+          const buttons = normalizeCardButtons(card).filter(button => button.text.trim());
+          const buttonRows = [];
+          for (let buttonIndex = 0; buttonIndex < buttons.length; buttonIndex += 2) {
+            buttonRows.push(buttons.slice(buttonIndex, buttonIndex + 2));
+          }
+          const buttonCell = (button, rowIndex) => `<td align="center" style="padding:${rowIndex ? 10 : 0}px 5px 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;border-collapse:separate;"><tr><td align="center" style="border-radius:9px;background:#2463D4;"><a href="${escapeHtml(safeLink(button.url))}" target="_blank" style="display:inline-block;padding:11px 16px;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:18px;font-weight:700;color:#FFFFFF;text-decoration:none;white-space:nowrap;">${escapeHtml(button.text)} ↗</a></td></tr></table></td>`;
+          const buttonHtml = buttonRows.length
+            ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:20px auto 0;border-collapse:collapse;"><tbody>${buttonRows.map((row, rowIndex) => `<tr>${row.length === 1 ? `<td colspan="2" align="center" style="padding:${rowIndex ? 10 : 0}px 5px 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;border-collapse:separate;"><tr><td align="center" style="border-radius:9px;background:#2463D4;"><a href="${escapeHtml(safeLink(row[0].url))}" target="_blank" style="display:inline-block;padding:11px 16px;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:18px;font-weight:700;color:#FFFFFF;text-decoration:none;white-space:nowrap;">${escapeHtml(row[0].text)} ↗</a></td></tr></table></td>` : row.map(button => buttonCell(button, rowIndex)).join('')}</tr>`).join('')}</tbody></table>`
+            : '';
+          const bodyHtml = richTextToEmailHtml(card.bodyRichHtml || legacyBodyToRichHtml(card.body), card.bodyFontSize, card.bodyColor);
+          return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;border-collapse:collapse;background:${newsletterBgColor};"><tr><td align="center" style="padding:0 14px ${gap}px;"><table data-height-key="${escapeHtml(card.id)}" class="email-container" role="presentation" width="${width}" cellpadding="0" cellspacing="0" border="0" style="${containerStyle}${heightStyle(card.height)}background:#FFFFFF;border:1px solid #D3E2CC;border-radius:22px;overflow:hidden;box-shadow:0 8px 24px rgba(16,45,92,.08);">${bannerHtml}<tr><td style="height:1px;vertical-align:top;padding:25px 36px 21px;${bgStyle}border-bottom:1px solid #D9E4D3;text-align:left;"><p style="margin:0;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:28px;line-height:36px;font-weight:700;color:#172033;">${escapeHtml(card.title)}</p>${card.subtitle ? `<p style="margin:7px 0 0;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:15px;line-height:23px;font-weight:700;color:#52625A;">${escapeHtml(card.subtitle)}</p>` : ''}</td></tr><tr><td style="vertical-align:top;padding:28px 36px 34px;background:#FFFFFF;"><p style="margin:0 0 12px;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;font-size:12px;line-height:18px;letter-spacing:.7px;text-transform:uppercase;color:#2463D4;">${String(index + 1).padStart(2, '0')} · ${escapeHtml(card.section)}</p>${bodyHtml}${buttonHtml}</td></tr></table></td></tr></table>`;
+        }).join('');
+
+        const feedbackHtml = state.showFeedback
+          ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;border-collapse:collapse;background:${newsletterBgColor};"><tr><td align="center" style="padding:8px 14px 28px;"><table data-height-key="feedback" class="email-container" role="presentation" width="${width}" cellpadding="0" cellspacing="0" border="0" style="${containerStyle}${heightStyle(state.feedbackHeight)}background:#EAF5EE;border-radius:22px;"><tr><td align="center" style="padding:34px 34px 38px;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;"><p style="margin:0 0 14px;font-size:27px;line-height:34px;font-weight:700;color:#1F3A2E;">${feedbackTitle}</p><p style="margin:0;font-size:17px;line-height:27px;color:#657083;">${feedbackBody}</p></td></tr></table></td></tr></table>`
+          : '';
+
+        const welcomeHtml = state.showWelcome !== false
+          ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;border-collapse:collapse;background:${newsletterBgColor};"><tr><td align="center" style="padding:0 14px ${gap}px;"><table data-height-key="welcome" class="email-container" role="presentation" width="${width}" cellpadding="0" cellspacing="0" border="0" style="${containerStyle}${heightStyle(state.welcomeHeight)}background:#FFFFFF;border:1px solid #D3E2CC;border-radius:22px;"><tr><td class="mobile-pad" style="padding:30px 36px 34px;font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;"><p style="margin:0 0 12px;font-size:20px;line-height:28px;font-weight:700;color:#172033;">${escapeHtml(state.welcomeTitle)}</p>${textToParagraphs(state.welcomeBody, 16, "#657083")}</td></tr></table></td></tr></table>`
+          : '';
+
+        return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(state.newsletterTitle)}</title></head><body style="margin:0;padding:0;min-width:${width + 28}px;background:${newsletterBgColor};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;border-collapse:collapse;background:${newsletterBgColor};"><tr><td align="center" style="padding:18px 14px ${gap}px;"><table class="email-container" role="presentation" width="${width}" cellpadding="0" cellspacing="0" border="0" style="${containerStyle}overflow:hidden;border:1px solid #D3E2CC;border-radius:22px;background:#FFFFFF;box-shadow:0 8px 24px rgba(16,45,92,.08);">${heroHtml}</table></td></tr></table>${welcomeHtml}${cardsHtml}${feedbackHtml}</body></html>`;
+      }
+
+      function updateSize(html) {
+        const bytes = new TextEncoder().encode(html).length;
+        const kb = bytes / 1024;
+        const ratio = Math.min(100, bytes / MAX_HTML_BYTES * 100);
+        elements.sizeNumber.textContent = kb.toFixed(1) + ' KB / 64 KB';
+        elements.sizeNumber.className = 'size-number' + (bytes > MAX_HTML_BYTES ? ' over' : bytes > MAX_HTML_BYTES * .85 ? ' warn' : '');
+        elements.sizeBar.style.width = ratio + '%';
+        elements.sizeBar.style.background = bytes > MAX_HTML_BYTES ? '#c9463b' : bytes > MAX_HTML_BYTES * .85 ? '#c48727' : '#45a36d';
+        return bytes;
+      }
+
+      function renderPreview() {
+        const html = buildEmail();
+        elements.previewFrame.srcdoc = html;
+        updateSize(html);
+        resizePreview();
+      }
+
+      function schedulePreview() {
+        clearTimeout(renderTimer);
+        renderTimer = window.setTimeout(renderPreview, 120);
+      }
+
+      function renderImageState(container, data, url, name, label) {
+        const source = imageSource(data, url);
+        if (!source) {
+          container.innerHTML = `<div class="image-state-copy"><strong>尚未设置${label}</strong><span>可以上传本地图片或填写 HTTPS 图片地址</span></div>`;
+          return;
+        }
+        container.innerHTML = `<img class="image-thumb" src="${escapeHtml(source)}" alt=""><div class="image-state-copy"><strong>${escapeHtml(name || (url ? 'URL 图片' : label))}</strong><span>${url ? '导出时引用图片地址' : '已压缩并保存在当前草稿中'}</span></div>`;
+      }
+
+      function renderHeroState() {
+        renderImageState($('#heroImageState'), state.heroData, state.heroUrl, state.heroName, '顶部横幅');
+      }
+
+      function renderCardList() {
+        if (!state.cards.length) {
+          elements.cardList.innerHTML = '<div class="empty">还没有卡片，请点击“添加卡片”。</div>';
+          return;
+        }
+        elements.cardList.innerHTML = state.cards.map((card, index) => `
+          <div class="card-item${card.id === state.selectedId ? ' selected' : ''}" draggable="true" data-card-id="${escapeHtml(card.id)}">
+            <button class="drag-handle" type="button" aria-label="拖动卡片">⋮⋮</button>
+            <button class="card-select" type="button" data-action="select">
+              <strong>${escapeHtml(card.title || '未命名卡片')}</strong>
+              <span>${String(index + 1).padStart(2, '0')} · ${escapeHtml(card.section || '未分类')}</span>
+            </button>
+            <div class="mini-actions">
+              <button class="mini" type="button" data-action="up" aria-label="上移">↑</button>
+              <button class="mini" type="button" data-action="down" aria-label="下移">↓</button>
+              <button class="mini" type="button" data-action="duplicate" aria-label="复制">⧉</button>
+              <button class="mini" type="button" data-action="delete" aria-label="删除">×</button>
+            </div>
+          </div>`).join('');
+      }
+
+      function renderCardEditor() {
+        savedRichRange = null;
+        const card = selectedCard();
+        if (!card) {
+          elements.cardEditor.innerHTML = '<div class="empty">请选择或添加一张卡片。</div>';
+          return;
+        }
+        const buttons = normalizeCardButtons(card);
+        const richBodyHtml = sanitizeRichEditorHtml(card.bodyRichHtml || legacyBodyToRichHtml(card.body));
+        card.bodyRichHtml = richBodyHtml;
+        elements.cardEditor.innerHTML = `
+          <div class="divider"></div>
+          <div class="section-head">
+            <div><h3>编辑：${escapeHtml(card.title || '未命名卡片')}</h3><p class="subtle">每张卡片的图片与背景独立保存</p></div>
+          </div>
+          <div class="form-grid" style="margin-top:14px">
+            ${heightControl(card.id, card.height)}
+            <label class="field">板块名称
+              <input type="text" data-card-field="section" value="${escapeHtml(card.section)}">
+            </label>
+            <label class="field">标题背景颜色
+              <div class="color-row"><input type="color" data-card-field="titleBgColor" value="${escapeHtml(card.titleBgColor)}"><input type="text" data-card-field="titleBgColorText" value="${escapeHtml(card.titleBgColor)}"></div>
+            </label>
+            <label class="field wide">卡片标题
+              <input type="text" data-card-field="title" value="${escapeHtml(card.title)}">
+            </label>
+            <label class="field wide">副标题
+              <input type="text" data-card-field="subtitle" value="${escapeHtml(card.subtitle)}">
+            </label>
+            <div class="field wide rich-text-field">
+              <div class="row-between"><span>正文内容</span><span class="rich-help">先选中文字，再设置该选区的字号或颜色</span></div>
+              <div class="rich-toolbar" data-rich-toolbar>
+                <label class="rich-toolbar-control">选区字号
+                  <select data-rich-command="fontSize" aria-label="设置所选文字字号">
+                    ${[12, 13, 14, 15, 16, 17, 18, 20, 22, 24].map(size => `<option value="${size}"${size === 16 ? ' selected' : ''}>${size} px</option>`).join('')}
+                  </select>
+                </label>
+                <label class="rich-toolbar-control">选区颜色
+                  <input type="color" data-rich-command="color" value="#2463d4" aria-label="设置所选文字颜色">
+                </label>
+                <button class="btn small" type="button" data-rich-command="clear">清除选区样式</button>
+              </div>
+              <div class="rich-editor" data-rich-editor="body" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" style="font-size:${safeFontSize(card.bodyFontSize)}px;color:${safeColor(card.bodyColor, '#657083')};">${richBodyHtml}</div>
+              <span class="rich-help">同一张卡片中可以对不同段落或文字分别设置；未单独设置的文字使用下方默认样式。</span>
+            </div>
+            <label class="field">默认正文字号
+              <select data-card-field="bodyFontSize">
+                ${[12, 13, 14, 15, 16, 17, 18, 20, 22, 24].map(size => `<option value="${size}"${String(card.bodyFontSize) === String(size) ? ' selected' : ''}>${size} px</option>`).join('')}
+              </select>
+            </label>
+            <label class="field">默认正文颜色
+              <div class="color-row"><input type="color" data-card-field="bodyColor" value="${safeColor(card.bodyColor, '#657083')}"><input type="text" data-card-field="bodyColorText" value="${safeColor(card.bodyColor, '#657083')}"></div>
+            </label>
+
+            <div class="field wide upload-box">
+              <div class="row-between"><div><strong>卡片横幅图片</strong><p class="subtle">上传后自动裁切为 697 × 200</p></div><div class="upload-row"><label class="btn small" for="cardImageUpload">上传图片</label><button class="btn small danger" type="button" data-image-action="remove-banner">移除</button><input class="file-input" id="cardImageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
+              <div class="image-state" id="cardImageState"></div>
+              <label class="field">或使用图片 URL
+                <input type="url" data-card-field="imageUrl" value="${escapeHtml(card.imageUrl)}" placeholder="https://example.com/card-banner.jpg">
+              </label>
+            </div>
+
+            <div class="field wide upload-box">
+              <div class="row-between"><div><strong>标题区背景图片</strong><p class="subtle">如果设置图片，将覆盖纯色背景显示</p></div><div class="upload-row"><label class="btn small" for="titleBgUpload">上传背景</label><button class="btn small danger" type="button" data-image-action="remove-title-bg">恢复纯色</button><input class="file-input" id="titleBgUpload" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
+              <div class="image-state" id="titleBgState"></div>
+              <label class="field">或使用背景图 URL
+                <input type="url" data-card-field="titleBgUrl" value="${escapeHtml(card.titleBgUrl)}" placeholder="https://example.com/title-background.jpg">
+              </label>
+            </div>
+
+            <div class="field wide button-editor">
+              <div class="button-editor-head">
+                <div><strong>卡片按钮（${buttons.length}）</strong><p class="subtle">每个按钮可单独设置文字和跳转链接；删除全部按钮即可隐藏按钮区。</p></div>
+                <button class="btn small" type="button" data-button-action="add"><span class="icon">＋</span>增加按钮</button>
+              </div>
+              <div class="button-editor-list">
+                ${buttons.length ? buttons.map((button, index) => `
+                  <div class="button-editor-item" data-button-id="${escapeHtml(button.id)}">
+                    <div class="button-editor-head">
+                      <strong>按钮 ${index + 1}</strong>
+                      <button class="btn small danger" type="button" data-button-action="delete" data-button-id="${escapeHtml(button.id)}">删除按钮</button>
+                    </div>
+                    <div class="form-grid">
+                      <label class="field">按钮文字
+                        <input type="text" data-button-field="text" data-button-id="${escapeHtml(button.id)}" value="${escapeHtml(button.text)}">
+                      </label>
+                      <label class="field">按钮链接
+                        <input type="url" data-button-field="url" data-button-id="${escapeHtml(button.id)}" value="${escapeHtml(button.url)}" placeholder="https://...">
+                      </label>
+                    </div>
+                  </div>`).join('') : '<div class="empty compact">当前没有按钮。点击“增加按钮”即可添加。</div>'}
+              </div>
+            </div>
+          </div>`;
+        renderImageState($('#cardImageState'), card.imageData, card.imageUrl, card.imageName, '卡片横幅');
+        renderImageState($('#titleBgState'), card.titleBgData, card.titleBgUrl, card.titleBgName, '标题背景');
+        updateHeightReadouts();
+      }
+
+      function renderBuiltInCardControls() {
+        const welcomeVisible = state.showWelcome !== false;
+        const feedbackVisible = state.showFeedback !== false;
+        $('#toggleWelcomeBtn').textContent = welcomeVisible ? '删除欢迎卡片' : '恢复欢迎卡片';
+        $('#toggleWelcomeBtn').classList.toggle('danger', welcomeVisible);
+        $('#welcomeCardFields').hidden = !welcomeVisible;
+        $('#welcomeVisibilityNote').textContent = welcomeVisible
+          ? '删除欢迎介绍文字卡片，不影响独立的顶部横幅；内容保留，可随时恢复。'
+          : '欢迎卡片已删除，不会出现在预览或导出的 HTML 中。点击“恢复欢迎卡片”可恢复原内容与高度。';
+        $('#toggleFeedbackBtn').textContent = feedbackVisible ? '删除反馈卡片' : '恢复反馈卡片';
+        $('#toggleFeedbackBtn').classList.toggle('danger', feedbackVisible);
+        $('#feedbackHeightControl').hidden = !feedbackVisible;
+        $('#feedbackVisibilityNote').textContent = feedbackVisible
+          ? '删除后不再出现在预览或导出的 HTML 中，可随时恢复。'
+          : '反馈卡片已删除，不会出现在预览或导出的 HTML 中。点击“恢复反馈卡片”可恢复。';
+      }
+
+      function toggleBuiltInCard(key, label) {
+        state[key] = state[key] === false;
+        renderBuiltInCardControls();
+        setDirty();
+        showToast(state[key] ? `${label}已恢复。` : `${label}已删除，可随时恢复。`);
+      }
+
+      function renderAll() {
+        $('#languageInput').value = state.language;
+        $('#monthInput').value = state.month;
+        $('#newsletterTitleInput').value = state.newsletterTitle;
+        $('#newsletterBgColorInput').value = safeColor(state.newsletterBgColor, '#f2f5ef');
+        $('#newsletterBgColorText').value = safeColor(state.newsletterBgColor, '#f2f5ef');
+        $('#welcomeTitleInput').value = state.welcomeTitle;
+        $('#welcomeBodyInput').value = state.welcomeBody;
+        $('#heroUrlInput').value = state.heroUrl;
+        $('#fileNameInput').value = state.fileName;
+        $('#welcomeHeightControl').innerHTML = heightControl('welcome', state.welcomeHeight, '欢迎介绍卡片');
+        $('#feedbackHeightControl').innerHTML = heightControl('feedback', state.feedbackHeight, '反馈卡片');
+        $('#cardGapInput').value = state.cardGap;
+        renderBuiltInCardControls();
+        renderHeroState();
+        renderCardList();
+        renderCardEditor();
+        renderPreview();
+      }
+
+      function rememberRichSelection() {
+        const editor = $('[data-rich-editor]', elements.cardEditor);
+        const selection = window.getSelection();
+        if (!editor || !selection || !selection.rangeCount) return false;
+        const range = selection.getRangeAt(0);
+        const commonNode = range.commonAncestorContainer.nodeType === 1
+          ? range.commonAncestorContainer
+          : range.commonAncestorContainer.parentNode;
+        if (!commonNode || !editor.contains(commonNode)) return false;
+        savedRichRange = range.cloneRange();
+        return true;
+      }
+
+      function restoreRichSelection() {
+        const editor = $('[data-rich-editor]', elements.cardEditor);
+        if (!editor || !savedRichRange) return null;
+        const commonNode = savedRichRange.commonAncestorContainer.nodeType === 1
+          ? savedRichRange.commonAncestorContainer
+          : savedRichRange.commonAncestorContainer.parentNode;
+        if (!commonNode || !editor.contains(commonNode)) return null;
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(savedRichRange);
+        editor.focus();
+        return savedRichRange;
+      }
+
+      function syncRichEditor() {
+        const editor = $('[data-rich-editor]', elements.cardEditor);
+        const card = selectedCard();
+        if (!editor || !card) return;
+        card.bodyRichHtml = editor.innerHTML;
+        card.body = editor.innerText.replace(/\n{3,}/g, '\n\n').trim();
+        setDirty();
+      }
+
+      function applyRichCommand(command, value) {
+        const editor = $('[data-rich-editor]', elements.cardEditor);
+        const range = restoreRichSelection();
+        if (!editor || !range || range.collapsed) {
+          showToast('请先在正文中选中要设置的文字。', true);
+          return;
+        }
+        document.execCommand('styleWithCSS', false, false);
+        if (command === 'fontSize') {
+          const size = safeFontSize(value);
+          document.execCommand('fontSize', false, '7');
+          $$('font[size="7"]', editor).forEach(font => {
+            font.style.fontSize = size + 'px';
+            font.style.lineHeight = Math.round(size * 1.58) + 'px';
+            font.removeAttribute('size');
+          });
+        } else if (command === 'color') {
+          const color = safeColor(value, '#2463D4');
+          document.execCommand('foreColor', false, color);
+          $$('font[color]', editor).forEach(font => {
+            const normalized = normalizeCssColor(font.getAttribute('color')) || color;
+            font.style.color = normalized;
+            font.removeAttribute('color');
+          });
+        } else if (command === 'clear') {
+          document.execCommand('removeFormat', false, null);
+        }
+        rememberRichSelection();
+        syncRichEditor();
+      }
+
+      function moveCard(id, direction) {
+        const index = state.cards.findIndex(card => card.id === id);
+        const target = index + direction;
+        if (index < 0 || target < 0 || target >= state.cards.length) return;
+        const [card] = state.cards.splice(index, 1);
+        state.cards.splice(target, 0, card);
+        renderCardList();
+        setDirty();
+      }
+
+      function duplicateCard(id) {
+        const index = state.cards.findIndex(card => card.id === id);
+        if (index < 0) return;
+        const copy = JSON.parse(JSON.stringify(state.cards[index]));
+        copy.id = makeId();
+        copy.buttons = normalizeCardButtons(copy).map(button => ({ ...button, id: makeButtonId() }));
+        copy.title = (copy.title || '卡片') + '（副本）';
+        state.cards.splice(index + 1, 0, copy);
+        state.selectedId = copy.id;
+        renderCardList();
+        renderCardEditor();
+        setDirty();
+      }
+
+      function deleteCard(id) {
+        if (state.cards.length <= 1) {
+          showToast('至少需要保留一张卡片。', true);
+          return;
+        }
+        const card = state.cards.find(item => item.id === id);
+        if (!confirm(`确定删除“${card?.title || '这张卡片'}”吗？`)) return;
+        const index = state.cards.findIndex(item => item.id === id);
+        state.cards.splice(index, 1);
+        if (state.selectedId === id) state.selectedId = state.cards[Math.min(index, state.cards.length - 1)].id;
+        renderCardList();
+        renderCardEditor();
+        setDirty();
+      }
+
+      elements.tabs.forEach(tab => tab.addEventListener('click', () => {
+        elements.tabs.forEach(item => item.classList.toggle('active', item === tab));
+        elements.panels.forEach(panel => panel.classList.toggle('active', panel.dataset.panel === tab.dataset.tab));
+      }));
+
+      $('#languageInput').addEventListener('change', event => { state.language = event.target.value; setDirty(); });
+      $('#monthInput').addEventListener('input', event => { state.month = event.target.value; setDirty(); });
+      $('#newsletterTitleInput').addEventListener('input', event => { state.newsletterTitle = event.target.value; setDirty(); });
+      $('#newsletterBgColorInput').addEventListener('input', event => {
+        state.newsletterBgColor = event.target.value;
+        $('#newsletterBgColorText').value = event.target.value;
+        setDirty();
+      });
+      $('#newsletterBgColorText').addEventListener('input', event => {
+        if (!/^#[0-9a-f]{6}$/i.test(event.target.value)) return;
+        state.newsletterBgColor = event.target.value;
+        $('#newsletterBgColorInput').value = event.target.value;
+        setDirty();
+      });
+      $('#welcomeTitleInput').addEventListener('input', event => { state.welcomeTitle = event.target.value; setDirty(); });
+      $('#welcomeBodyInput').addEventListener('input', event => { state.welcomeBody = event.target.value; setDirty(); });
+      $('#heroUrlInput').addEventListener('input', event => { state.heroUrl = event.target.value; renderHeroState(); setDirty(); });
+      $('#fileNameInput').addEventListener('input', event => { state.fileName = event.target.value; setDirty(); });
+      $('#cardGapInput').addEventListener('change', event => { state.cardGap = event.target.value; setDirty(); });
+      $('#toggleWelcomeBtn').addEventListener('click', () => toggleBuiltInCard('showWelcome', '欢迎卡片'));
+      $('#toggleFeedbackBtn').addEventListener('click', () => toggleBuiltInCard('showFeedback', '反馈卡片'));
+
+      $('#heroUpload').addEventListener('change', async event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        try {
+          state.heroData = await processImage(file, 697, 200, .68);
+          state.heroName = file.name;
+          state.heroUrl = '';
+          $('#heroUrlInput').value = '';
+          renderHeroState();
+          setDirty();
+          showToast('顶部横幅已上传并压缩。');
+        } catch (error) { showToast(error.message, true); }
+        event.target.value = '';
+      });
+
+      $('#removeHeroBtn').addEventListener('click', () => {
+        state.heroData = '';
+        state.heroName = '';
+        state.heroUrl = '';
+        $('#heroUrlInput').value = '';
+        renderHeroState();
+        setDirty();
+      });
+
+      $('#addCardBtn').addEventListener('click', () => {
+        const palette = ['#eef5ff', '#fff4e8', '#eef8f1', '#f4efff'];
+        const card = createDefaultCard({ titleBgColor: palette[state.cards.length % palette.length] });
+        state.cards.push(card);
+        state.selectedId = card.id;
+        renderCardList();
+        renderCardEditor();
+        setDirty();
+      });
+
+      elements.cardList.addEventListener('click', event => {
+        const item = event.target.closest('[data-card-id]');
+        if (!item) return;
+        const id = item.dataset.cardId;
+        const actionButton = event.target.closest('[data-action]');
+        const action = actionButton?.dataset.action || 'select';
+        if (action === 'select') {
+          state.selectedId = id;
+          renderCardList();
+          renderCardEditor();
+        } else if (action === 'up') moveCard(id, -1);
+        else if (action === 'down') moveCard(id, 1);
+        else if (action === 'duplicate') duplicateCard(id);
+        else if (action === 'delete') deleteCard(id);
+      });
+
+      elements.cardList.addEventListener('dragstart', event => {
+        const item = event.target.closest('[data-card-id]');
+        if (!item) return;
+        draggedId = item.dataset.cardId;
+        item.classList.add('dragging');
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      elements.cardList.addEventListener('dragend', event => {
+        event.target.closest('[data-card-id]')?.classList.remove('dragging');
+        draggedId = '';
+      });
+      elements.cardList.addEventListener('dragover', event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; });
+      elements.cardList.addEventListener('drop', event => {
+        event.preventDefault();
+        const target = event.target.closest('[data-card-id]');
+        if (!target || !draggedId || target.dataset.cardId === draggedId) return;
+        const from = state.cards.findIndex(card => card.id === draggedId);
+        const to = state.cards.findIndex(card => card.id === target.dataset.cardId);
+        const [card] = state.cards.splice(from, 1);
+        state.cards.splice(to, 0, card);
+        renderCardList();
+        setDirty();
+      });
+
+      elements.cardEditor.addEventListener('pointerdown', event => {
+        if (event.target.closest('[data-rich-toolbar]')) rememberRichSelection();
+      });
+
+      elements.cardEditor.addEventListener('mouseup', event => {
+        if (event.target.closest('[data-rich-editor]')) rememberRichSelection();
+      });
+
+      elements.cardEditor.addEventListener('keyup', event => {
+        if (event.target.closest('[data-rich-editor]')) rememberRichSelection();
+      });
+
+      elements.cardEditor.addEventListener('paste', event => {
+        if (!event.target.closest('[data-rich-editor]')) return;
+        event.preventDefault();
+        const text = event.clipboardData?.getData('text/plain') || '';
+        document.execCommand('insertText', false, text);
+      });
+
+      elements.cardEditor.addEventListener('input', event => {
+        const card = selectedCard();
+        if (!card) return;
+        if (event.target.closest('[data-rich-editor]')) {
+          syncRichEditor();
+          return;
+        }
+        if (event.target.dataset.richCommand === 'color') {
+          applyRichCommand('color', event.target.value);
+          return;
+        }
+        const buttonField = event.target.dataset.buttonField;
+        if (buttonField) {
+          const button = normalizeCardButtons(card).find(item => item.id === event.target.dataset.buttonId);
+          if (!button) return;
+          button[buttonField] = event.target.value;
+          setDirty();
+          return;
+        }
+        const field = event.target.dataset.cardField;
+        if (!field) return;
+        if (field === 'titleBgColorText' || field === 'bodyColorText') {
+          if (/^#[0-9a-f]{6}$/i.test(event.target.value)) {
+            const colorField = field === 'titleBgColorText' ? 'titleBgColor' : 'bodyColor';
+            card[colorField] = event.target.value;
+            const color = $(`[data-card-field="${colorField}"]`, elements.cardEditor);
+            if (color) color.value = event.target.value;
+          }
+        } else {
+          card[field] = event.target.value;
+          if (field === 'titleBgColor' || field === 'bodyColor') {
+            const textField = field === 'titleBgColor' ? 'titleBgColorText' : 'bodyColorText';
+            const text = $(`[data-card-field="${textField}"]`, elements.cardEditor);
+            if (text) text.value = event.target.value;
+          }
+        }
+        if (field === 'title' || field === 'section') renderCardList();
+        if (field === 'imageUrl') renderImageState($('#cardImageState'), card.imageData, card.imageUrl, card.imageName, '卡片横幅');
+        if (field === 'titleBgUrl') renderImageState($('#titleBgState'), card.titleBgData, card.titleBgUrl, card.titleBgName, '标题背景');
+        const richEditor = $('[data-rich-editor]', elements.cardEditor);
+        if (richEditor && field === 'bodyFontSize') richEditor.style.fontSize = safeFontSize(card.bodyFontSize) + 'px';
+        if (richEditor && (field === 'bodyColor' || field === 'bodyColorText')) richEditor.style.color = safeColor(card.bodyColor, '#657083');
+        setDirty();
+      });
+
+      elements.cardEditor.addEventListener('change', async event => {
+        const card = selectedCard();
+        if (!card) return;
+        if (event.target.dataset.richCommand === 'fontSize') {
+          applyRichCommand('fontSize', event.target.value);
+          return;
+        }
+        if (event.target.id === 'cardImageUpload' && event.target.files[0]) {
+          try {
+            const file = event.target.files[0];
+            card.imageData = await processImage(file, 697, 200, .68);
+            card.imageName = file.name;
+            card.imageUrl = '';
+            renderCardEditor();
+            setDirty();
+            showToast('卡片横幅已上传并压缩。');
+          } catch (error) { showToast(error.message, true); }
+        }
+        if (event.target.id === 'titleBgUpload' && event.target.files[0]) {
+          try {
+            const file = event.target.files[0];
+            card.titleBgData = await processImage(file, 697, 160, .62);
+            card.titleBgName = file.name;
+            card.titleBgUrl = '';
+            renderCardEditor();
+            setDirty();
+            showToast('标题背景已上传并压缩。');
+          } catch (error) { showToast(error.message, true); }
+        }
+      });
+
+      elements.cardEditor.addEventListener('click', event => {
+        const card = selectedCard();
+        if (!card) return;
+        if (event.target.closest('[data-rich-command="clear"]')) {
+          applyRichCommand('clear');
+          return;
+        }
+        const buttonAction = event.target.closest('[data-button-action]')?.dataset.buttonAction;
+        if (buttonAction === 'add') {
+          normalizeCardButtons(card).push(createCardButton({ text: state.language === 'en' ? 'Learn more' : '了解更多' }));
+          renderCardEditor();
+          setDirty();
+          return;
+        }
+        if (buttonAction === 'delete') {
+          const buttonId = event.target.closest('[data-button-id]')?.dataset.buttonId;
+          card.buttons = normalizeCardButtons(card).filter(button => button.id !== buttonId);
+          renderCardEditor();
+          setDirty();
+          return;
+        }
+        const action = event.target.closest('[data-image-action]')?.dataset.imageAction;
+        if (!action) return;
+        if (action === 'remove-banner') {
+          card.imageData = ''; card.imageName = ''; card.imageUrl = '';
+        } else if (action === 'remove-title-bg') {
+          card.titleBgData = ''; card.titleBgName = ''; card.titleBgUrl = '';
+        }
+        renderCardEditor();
+        setDirty();
+      });
+
+      function saveLocal() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          elements.saveStatus.textContent = '草稿已保存';
+          showToast('草稿已保存到当前浏览器。');
+        } catch (error) {
+          showToast('草稿过大，无法保存到浏览器。请导出 JSON 文件。', true);
+        }
+      }
+
+      function loadLocal() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) { showToast('当前浏览器中没有已保存的草稿。', true); return; }
+        try {
+          applyImportedState(JSON.parse(saved));
+          elements.saveStatus.textContent = '已读取草稿';
+          showToast('已读取浏览器草稿。');
+        } catch (error) { showToast('草稿数据无法读取。', true); }
+      }
+
+      function applyImportedState(data) {
+        if (!data || !Array.isArray(data.cards)) throw new Error('无效的草稿');
+        const base = defaultState();
+        state = { ...base, ...data };
+        state.version = 5;
+        state.showWelcome = data.showWelcome !== false;
+        state.showFeedback = data.showFeedback !== false;
+        state.emailWidth = '840';
+        state.welcomeHeight = normalizeHeight(state.welcomeHeight);
+        state.feedbackHeight = normalizeHeight(state.feedbackHeight);
+        state.cards = data.cards.length ? data.cards.map(card => {
+          const normalized = { ...createDefaultCard(), ...card, id: card.id || makeId() };
+          normalized.height = normalizeHeight(normalized.height);
+          normalized.bodyRichHtml = sanitizeRichEditorHtml(card.bodyRichHtml || legacyBodyToRichHtml(card.body));
+          normalized.buttons = Array.isArray(card.buttons)
+            ? card.buttons.map(button => createCardButton({ ...button, id: button?.id || makeButtonId() }))
+            : card.showButton === false
+              ? []
+              : [createCardButton({ text: card.buttonText || '了解更多', url: card.buttonUrl || '' })];
+          return normalized;
+        }) : base.cards;
+        if (!state.cards.some(card => card.id === state.selectedId)) state.selectedId = state.cards[0].id;
+        renderAll();
+      }
+
+      $('#saveLocalBtn').addEventListener('click', saveLocal);
+      $('#loadLocalBtn').addEventListener('click', loadLocal);
+      $('#exportDraftBtn').addEventListener('click', () => {
+        downloadBlob(JSON.stringify(state, null, 2), 'application/json;charset=utf-8', fileNameWithExtension(state.fileName + ' draft', '.json'));
+        showToast('草稿 JSON 已导出。');
+      });
+      $('#importDraftBtn').addEventListener('click', () => $('#draftFileInput').click());
+      $('#draftFileInput').addEventListener('change', event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onerror = () => showToast('无法读取草稿文件。', true);
+        reader.onload = () => {
+          try { applyImportedState(JSON.parse(String(reader.result))); showToast('草稿已导入。'); }
+          catch (error) { showToast('JSON 草稿格式不正确。', true); }
+        };
+        reader.readAsText(file, 'utf-8');
+        event.target.value = '';
+      });
+
+      function downloadHtml() {
+        const html = buildEmail();
+        const bytes = updateSize(html);
+        if (bytes > MAX_HTML_BYTES && !confirm(`当前 HTML 为 ${(bytes / 1024).toFixed(1)} KB，超过 64 KB。仍然导出吗？`)) return;
+        downloadBlob(html, 'text/html;charset=utf-8', fileNameWithExtension(state.fileName, '.html'));
+        showToast('Newsletter HTML 已导出。');
+      }
+
+      $('#downloadHtmlBtn').addEventListener('click', downloadHtml);
+      $('#downloadHtmlBtnBottom').addEventListener('click', downloadHtml);
+      $('#refreshPreviewBtn').addEventListener('click', () => { renderPreview(); showToast('预览已刷新。'); });
+
+      elements.previewFrame.addEventListener('load', updateHeightReadouts);
+      window.addEventListener('resize', resizePreview);
+      if (window.ResizeObserver) new ResizeObserver(resizePreview).observe(elements.previewWrap);
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
